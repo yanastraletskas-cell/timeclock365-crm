@@ -5,6 +5,7 @@
 // ===================================
 
 const http = require('http');       // встроенный — создаёт сервер
+const https = require('https');     // встроенный — для запросов к LinkedIn API
 const fs = require('fs');           // встроенный — работа с файлами
 const path = require('path');       // встроенный — пути к файлам
 const nodemailer = require('nodemailer'); // для отправки email
@@ -183,6 +184,84 @@ async function sendApprovalNotification(type, item) {
 }
 
 // ===================================
+// ПУБЛИКАЦИЯ В LINKEDIN
+// Защита: реальный POST уйдёт ТОЛЬКО при всех условиях:
+//   LINKEDIN_PUBLISH_ENABLED=true И LINKEDIN_DRY_RUN=false
+//   И заданы LINKEDIN_ACCESS_TOKEN + LINKEDIN_AUTHOR_URN.
+// ===================================
+
+function publishToLinkedIn(text) {
+  return new Promise((resolve) => {
+    if (!config.LINKEDIN_PUBLISH_ENABLED) {
+      console.log('[linkedin disabled] публикация выключена (LINKEDIN_PUBLISH_ENABLED!=true)');
+      return resolve({ ok: false, reason: 'disabled' });
+    }
+
+    if (config.LINKEDIN_DRY_RUN) {
+      const preview = text.length > 200 ? text.slice(0, 200) + '…' : text;
+      console.log('[linkedin dry-run] не публикую. Превью текста:');
+      console.log('  ' + preview.replace(/\n/g, '\n  '));
+      return resolve({ ok: true, dryRun: true });
+    }
+
+    if (!config.LINKEDIN_ACCESS_TOKEN || !config.LINKEDIN_AUTHOR_URN) {
+      console.error('[linkedin] нет LINKEDIN_ACCESS_TOKEN или LINKEDIN_AUTHOR_URN — не публикую');
+      return resolve({ ok: false, reason: 'no-credentials' });
+    }
+
+    const isOrganization = config.LINKEDIN_AUTHOR_URN.startsWith('urn:li:organization:');
+    const visibility = isOrganization
+      ? { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' }
+      : { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' };
+
+    const payload = JSON.stringify({
+      author: config.LINKEDIN_AUTHOR_URN,
+      lifecycleState: 'PUBLISHED',
+      specificContent: {
+        'com.linkedin.ugc.ShareContent': {
+          shareCommentary: { text },
+          shareMediaCategory: 'NONE',
+        },
+      },
+      visibility,
+    });
+
+    const req = https.request({
+      method: 'POST',
+      hostname: 'api.linkedin.com',
+      path: '/v2/ugcPosts',
+      headers: {
+        'Authorization': `Bearer ${config.LINKEDIN_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    }, (res) => {
+      let respBody = '';
+      res.on('data', c => respBody += c);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          const urn = res.headers['x-restli-id'] || respBody;
+          console.log(`✓ LinkedIn опубликовано (HTTP ${res.statusCode}): ${urn}`);
+          resolve({ ok: true, urn, status: res.statusCode });
+        } else {
+          console.error(`✗ LinkedIn HTTP ${res.statusCode}: ${respBody}`);
+          resolve({ ok: false, status: res.statusCode, response: respBody });
+        }
+      });
+    });
+
+    req.on('error', (err) => {
+      console.error(`✗ LinkedIn network error: ${err.message}`);
+      resolve({ ok: false, error: err.message });
+    });
+
+    req.write(payload);
+    req.end();
+  });
+}
+
+// ===================================
 // HTTP СЕРВЕР
 // ===================================
 
@@ -283,7 +362,7 @@ const server = http.createServer(async (req, res) => {
   } else if (req.method === 'POST' && req.url === '/approve') {
     let body = '';
     req.on('data', chunk => body += chunk);
-    req.on('end', () => {
+    req.on('end', async () => {
       try {
         const { type, index, status, editedContent, approvedAt } = JSON.parse(body);
         const APPROVALS_FILE = path.join(__dirname, 'approvals.json');
@@ -291,11 +370,30 @@ const server = http.createServer(async (req, res) => {
         try { approvals = JSON.parse(fs.readFileSync(APPROVALS_FILE, 'utf8')); } catch(e) {}
 
         if (approvals[type] && approvals[type][index] !== undefined) {
-          if (status !== undefined) approvals[type][index].status = status;
-          if (editedContent !== undefined) approvals[type][index].editedContent = editedContent;
-          if (approvedAt !== undefined) approvals[type][index].approvedAt = approvedAt;
+          const item = approvals[type][index];
+          if (status !== undefined) item.status = status;
+          if (editedContent !== undefined) item.editedContent = editedContent;
+          if (approvedAt !== undefined) item.approvedAt = approvedAt;
           fs.writeFileSync(APPROVALS_FILE, JSON.stringify(approvals, null, 2));
           console.log(`✓ ${type}[${index}] → ${status}`);
+
+          // Авто-публикация LinkedIn-постов после approved/edited.
+          // Не публикуем повторно (флаг publishedAt) и пропускаем если undo (status=pending/rejected).
+          if (type === 'posts'
+              && (status === 'approved' || status === 'edited')
+              && !item.publishedAt) {
+            const text = item.editedContent || item.content || '';
+            const result = await publishToLinkedIn(text);
+            if (result.ok && !result.dryRun) {
+              item.publishedAt = new Date().toISOString();
+              item.linkedinPostUrn = result.urn;
+              fs.writeFileSync(APPROVALS_FILE, JSON.stringify(approvals, null, 2));
+              console.log(`✓ posts[${index}] опубликован: ${result.urn}`);
+            } else if (result.dryRun) {
+              item.publishAttemptedAt = new Date().toISOString();
+              fs.writeFileSync(APPROVALS_FILE, JSON.stringify(approvals, null, 2));
+            }
+          }
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true }));
@@ -397,7 +495,13 @@ server.listen(config.PORT, () => {
   console.log('  TimeClock 365 Email Server');
   console.log('========================================');
   console.log(`  Сервер запущен: http://localhost:${config.PORT}`);
-  console.log(`  Email: ${config.EMAIL_ENABLED ? 'ВКЛ (' + config.GMAIL_USER + ')' : 'ВЫКЛ'}`);
+  console.log(`  Email:    ${config.EMAIL_ENABLED ? 'ВКЛ (' + config.GMAIL_USER + ')' : 'ВЫКЛ'}`);
+  let liMode;
+  if (!config.LINKEDIN_PUBLISH_ENABLED) liMode = 'ВЫКЛ';
+  else if (config.LINKEDIN_DRY_RUN) liMode = 'DRY-RUN (ничего не публикует)';
+  else if (!config.LINKEDIN_ACCESS_TOKEN || !config.LINKEDIN_AUTHOR_URN) liMode = 'нет токена';
+  else liMode = 'БОЕВОЙ — реально публикует';
+  console.log(`  LinkedIn: ${liMode}`);
   console.log('========================================');
   console.log('');
 });
