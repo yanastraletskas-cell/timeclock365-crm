@@ -9,6 +9,12 @@ module.exports = {
   GMAIL_USER: process.env.GMAIL_USER || 'yana.straletskas@gmail.com',
   GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD || '',
 
+  // Включена ли отправка email (drip + уведомления о согласовании).
+  // Если EMAIL_ENABLED не задан — авто: ON только если есть GMAIL_APP_PASSWORD.
+  EMAIL_ENABLED: process.env.EMAIL_ENABLED !== undefined
+    ? process.env.EMAIL_ENABLED === 'true'
+    : Boolean(process.env.GMAIL_APP_PASSWORD),
+
   // От кого приходят письма
   FROM_EMAIL: process.env.FROM_EMAIL || 'yana@timeclock365.com',
   FROM_NAME: process.env.FROM_NAME || 'TimeClock 365',

@@ -33,14 +33,17 @@ function saveSubscribers(subscribers) {
 // ОТПРАВКА EMAIL через Gmail
 // ===================================
 
-// Создаём "отправщик" с твоими Gmail данными
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: config.GMAIL_USER,
-    pass: config.GMAIL_APP_PASSWORD, // App Password, не обычный пароль!
-  },
-});
+// Создаём "отправщик" с твоими Gmail данными.
+// Если EMAIL_ENABLED=false — транспорт не создаётся, чтобы локально без пароля ничего не падало.
+const transporter = config.EMAIL_ENABLED
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: config.GMAIL_USER,
+        pass: config.GMAIL_APP_PASSWORD, // App Password, не обычный пароль!
+      },
+    })
+  : null;
 
 // Функция отправки одного письма
 async function sendEmail(to, name, emailNumber) {
@@ -49,6 +52,11 @@ async function sendEmail(to, name, emailNumber) {
     emailNumber === 1 ? emails.email1(name) :
     emailNumber === 2 ? emails.email2(name) :
     emails.email3(name);
+
+  if (!config.EMAIL_ENABLED) {
+    console.log(`[email disabled] Email ${emailNumber} → ${to}: "${emailData.subject}" (не отправлено)`);
+    return false;
+  }
 
   try {
     await transporter.sendMail({
@@ -132,6 +140,12 @@ const TYPE_LABELS = {
 async function sendApprovalNotification(type, item) {
   const label = TYPE_LABELS[type] || type;
   const title = item.title || item.subject || item.id || label;
+
+  if (!config.EMAIL_ENABLED) {
+    console.log(`[email disabled] Уведомление ${config.OWNER_EMAIL}: "Новое на согласование: ${label}" — ${title}`);
+    return;
+  }
+
   const insightsHtml = (item.insights && item.insights.length)
     ? `<ul style="padding-left:20px;margin:12px 0;">${item.insights.map(i =>
         `<li style="margin-bottom:6px;color:#444;">${i}</li>`).join('')}</ul>`
@@ -383,16 +397,19 @@ server.listen(config.PORT, () => {
   console.log('  TimeClock 365 Email Server');
   console.log('========================================');
   console.log(`  Сервер запущен: http://localhost:${config.PORT}`);
-  console.log(`  Отправка с: ${config.GMAIL_USER}`);
+  console.log(`  Email: ${config.EMAIL_ENABLED ? 'ВКЛ (' + config.GMAIL_USER + ')' : 'ВЫКЛ'}`);
   console.log('========================================');
   console.log('');
 });
 
-// Проверяем расписание каждые 15 минут
-const FIFTEEN_MINUTES = 15 * 60 * 1000;
-setInterval(checkAndSendEmails, FIFTEEN_MINUTES);
-
-// Первая проверка сразу при старте сервера
-checkAndSendEmails();
-
-console.log('Проверка расписания запущена (каждые 15 минут)');
+if (config.EMAIL_ENABLED) {
+  // Проверяем расписание каждые 15 минут
+  const FIFTEEN_MINUTES = 15 * 60 * 1000;
+  setInterval(checkAndSendEmails, FIFTEEN_MINUTES);
+  // Первая проверка сразу при старте сервера
+  checkAndSendEmails();
+  console.log('Проверка расписания запущена (каждые 15 минут)');
+} else {
+  console.log('⚠ Email-агент ОТКЛЮЧЁН. Drip и уведомления отправляться не будут.');
+  console.log('  Включить: задать GMAIL_APP_PASSWORD или EMAIL_ENABLED=true.');
+}
