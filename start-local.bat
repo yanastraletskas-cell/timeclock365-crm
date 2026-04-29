@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ============================================
-echo   TimeClock 365 - LOCAL run [one-click]
+echo   TimeClock 365 - LOCAL run
 echo ============================================
 echo.
 echo Working directory: %CD%
@@ -18,13 +18,24 @@ for /f "delims=" %%v in ('npm -v') do set NPM_V=%%v
 echo Node: %NODE_V%    npm: %NPM_V%
 echo.
 
-REM --- Port (default 3000) ---
+REM --- Find first free port starting from PORT or 3000 ---
 if "%PORT%"=="" set PORT=3000
+set TRY_PORT=%PORT%
+set MAX_PORT=3020
 
-REM --- Check port is free ---
-set PORT_BUSY=
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT% " ^| findstr "LISTENING"') do set PORT_BUSY=%%p
-if defined PORT_BUSY goto :port_busy
+:check_port
+set BUSY=
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%TRY_PORT% " ^| findstr "LISTENING"') do set BUSY=%%p
+if not defined BUSY goto :port_found
+echo Port %TRY_PORT% busy [PID %BUSY%], trying next...
+set /a TRY_PORT=%TRY_PORT% + 1
+if %TRY_PORT% gtr %MAX_PORT% goto :no_free_port
+goto :check_port
+
+:port_found
+set PORT=%TRY_PORT%
+echo Selected free port: %PORT%
+echo.
 
 REM --- Install deps if missing ---
 if not exist node_modules goto :install_deps
@@ -46,13 +57,18 @@ echo LinkedIn: OFF
 echo Port:     %PORT%
 echo.
 echo ====================================================
-echo   READY. Open in your browser:
+echo   READY. Approvals page:
 echo     http://localhost:%PORT%/approvals-page
-echo     http://localhost:%PORT%/   - CRM dashboard
+echo   CRM dashboard:
+echo     http://localhost:%PORT%/
 echo ====================================================
+echo   Browser will open automatically in 3 seconds.
 echo   Close this window to stop the server.
 echo ====================================================
 echo.
+
+REM --- Auto-open browser after a short delay ---
+start "" cmd /c "timeout /t 3 /nobreak >nul & start """" http://localhost:%PORT%/approvals-page"
 
 node server.js
 set EXIT_CODE=%errorlevel%
@@ -68,17 +84,9 @@ echo.
 pause
 exit /b 1
 
-:port_busy
-echo [X] Port %PORT% is already in use by PID %PORT_BUSY%.
-echo.
-echo     Process holding the port:
-for /f "tokens=*" %%a in ('tasklist /FI "PID eq %PORT_BUSY%" /NH 2^>nul') do echo       %%a
-echo.
-echo     Fix options:
-echo       1. Close that program, or
-echo       2. Run with a different port:
-echo             set PORT=3001
-echo             start-local.bat
+:no_free_port
+echo [X] No free port between %PORT% and %MAX_PORT%.
+echo     Close some programs holding ports in that range and try again.
 echo.
 pause
 exit /b 1
