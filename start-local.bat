@@ -49,10 +49,8 @@ echo.
 goto :run
 
 :run
-set EMAIL_ENABLED=false
 set LINKEDIN_PUBLISH_ENABLED=false
 
-echo Email:    OFF
 echo LinkedIn: OFF
 echo Port:     %PORT%
 echo.
