@@ -489,6 +489,20 @@ const server = http.createServer(async (req, res) => {
 // ===================================
 
 // Запускаем сервер
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error('');
+    console.error('========================================');
+    console.error(`  ✗ Порт ${config.PORT} уже занят другим процессом.`);
+    console.error('  Закрой ту программу или запусти с другим портом:');
+    console.error('    PowerShell:  $env:PORT="3001"; npm start');
+    console.error('    cmd:         set PORT=3001 && npm start');
+    console.error('========================================');
+  } else {
+    console.error('✗ Ошибка сервера:', err.message);
+  }
+  process.exit(1);
+});
 server.listen(config.PORT, () => {
   console.log('');
   console.log('========================================');
