@@ -9,6 +9,21 @@ echo.
 echo Working directory: %CD%
 echo.
 
+REM --- First-time setup: run setup.bat if no .env file ---
+if not exist .env (
+  echo No settings file found. Starting first-time setup...
+  echo.
+  call setup.bat
+  if not exist .env (
+    echo Setup did not complete. Please run setup.bat again.
+    pause
+    exit /b 1
+  )
+  echo.
+  echo Continuing to launch the program...
+  echo.
+)
+
 REM --- Node.js check ---
 where node >nul 2>nul
 if errorlevel 1 goto :no_node
