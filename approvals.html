@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TimeClock 365 — На согласование</title>
+<title>TimeClock 365 — Approvals</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
@@ -16,7 +16,6 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
   justify-content: space-between;
 }
 .header h1 { color: #fff; font-size: 18px; }
-.header a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px; }
 
 .tabs {
   background: #fff;
@@ -34,7 +33,7 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
   border-bottom: 3px solid transparent;
   white-space: nowrap;
 }
-.tab.active { color: #3479E9; border-color: #3479E9; font-weight: 600; }
+.tab.active { color: #3479E9; border-bottom-color: #3479E9; font-weight: 600; }
 .tab .count {
   background: #3479E9;
   color: #fff;
@@ -45,11 +44,26 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 }
 .tab .count.done { background: #12B76A; }
 
+.bannerbar {
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  padding: 8px 32px;
+  font-size: 12px;
+  color: #555;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.bannerbar strong { color: #1C1C1D; }
+.bannerbar .pill {
+  background: #EEF4FF; color: #3479E9;
+  padding: 2px 10px; border-radius: 10px;
+}
+
 .content { padding: 24px 32px; max-width: 900px; }
 .section { display: none; }
 .section.active { display: block; }
 
-/* Card */
 .card {
   background: #fff;
   border-radius: 8px;
@@ -61,8 +75,8 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
 .card.approved { border-color: #12B76A; }
 .card.rejected { border-color: #ddd; opacity: 0.6; }
-.card.edited { border-color: #FF981B; }
-.card.read { border-color: #12B76A; opacity: 0.8; }
+.card.edited   { border-color: #FF981B; }
+.card.read     { border-color: #12B76A; opacity: 0.85; }
 
 .card-header {
   padding: 14px 20px;
@@ -77,7 +91,6 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 
 .card-body { padding: 20px; }
 
-/* Post text */
 .post-text {
   font-size: 15px;
   line-height: 1.7;
@@ -90,12 +103,11 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 }
 .post-text[contenteditable="true"] {
   background: #fffbf0;
-  border-color: #FF981B;
+  border-left-color: #FF981B;
   outline: none;
   cursor: text;
 }
 
-/* Report text */
 .report-text {
   font-size: 14px;
   line-height: 1.8;
@@ -108,13 +120,13 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
   overflow-y: auto;
 }
 
-/* Buttons */
 .actions {
   padding: 14px 20px;
   display: flex;
   gap: 8px;
   border-top: 1px solid #f0f0f0;
   align-items: center;
+  flex-wrap: wrap;
 }
 .btn {
   padding: 8px 18px;
@@ -146,6 +158,16 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 .status-edited   { background: #FFF3E0; color: #E87A00; }
 .status-read     { background: #E8F8EE; color: #12B76A; }
 
+.schedule-line {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #555;
+}
+.schedule-line .when { font-weight: 600; color: #3479E9; }
+.schedule-line .img  { color: #888; margin-left: 12px; }
+.schedule-line .pub  { color: #12B76A; font-weight: 600; }
+.schedule-line .err  { color: #D92D20; }
+
 .empty {
   text-align: center;
   padding: 60px 20px;
@@ -153,7 +175,6 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 }
 .empty h3 { font-size: 18px; margin-bottom: 8px; color: #555; }
 
-/* Toast */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -177,7 +198,6 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
   margin-top: 6px;
 }
 
-/* Insight list */
 .insight-list { list-style: none; padding: 0; }
 .insight-list li {
   padding: 10px 14px;
@@ -195,342 +215,296 @@ body { font-family: Arial, sans-serif; background: #f5f7fa; color: #1C1C1D; }
 <div class="header">
   <h1>TimeClock 365</h1>
   <div style="display:flex;gap:8px;align-items:center;">
-    <a href="/" style="color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12);padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;">👥 Лиды / CRM</a>
-    <a href="/approvals-page" style="color:#fff;background:rgba(255,255,255,0.25);padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">✅ На согласование</a>
+    <a href="/" style="color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.12);padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;">Leads / CRM</a>
+    <a href="/approvals-page" style="color:#fff;background:rgba(255,255,255,0.25);padding:7px 16px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600;">Approvals</a>
   </div>
+</div>
+
+<div class="bannerbar">
+  Banners: <strong id="bn-total">--</strong>
+  &middot; used <strong id="bn-used">--</strong>
+  &middot; <span class="pill" id="bn-avail">--</span> available
+  &middot; daily slots: <strong>11:25, 18:36</strong>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    <span id="gen-status" style="font-size:12px;color:#888;"></span>
+    <button id="btn-generate" onclick="triggerGeneration()"
+      style="background:#3479E9;color:#fff;border:none;padding:5px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">
+      Generate 60 posts
+    </button>
+  </span>
 </div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('posts')">
-    LinkedIn посты <span class="count" id="count-posts">0</span>
+    LinkedIn posts <span class="count" id="count-posts">0</span>
   </div>
   <div class="tab" onclick="switchTab('landings')">
-    Лендинги <span class="count" id="count-landings">0</span>
-  </div>
-  <div class="tab" onclick="switchTab('emails')">
-    Письма <span class="count" id="count-emails">0</span>
+    Landings <span class="count" id="count-landings">0</span>
   </div>
   <div class="tab" onclick="switchTab('competitors')">
-    Конкуренты <span class="count" id="count-competitors">0</span>
+    Competitors <span class="count" id="count-competitors">0</span>
   </div>
   <div class="tab" onclick="switchTab('seo')">
-    SEO идеи <span class="count" id="count-seo">0</span>
+    SEO ideas <span class="count" id="count-seo">0</span>
   </div>
   <div class="tab" onclick="switchTab('weekly')">
-    Недельный отчёт <span class="count" id="count-weekly">0</span>
+    Weekly report <span class="count" id="count-weekly">0</span>
   </div>
   <div class="tab" onclick="switchTab('monthly')">
-    Месячный отчёт <span class="count" id="count-monthly">0</span>
+    Monthly report <span class="count" id="count-monthly">0</span>
   </div>
 </div>
 
 <div class="content">
-
-  <!-- ПОСТЫ -->
-  <div id="section-posts" class="section active">
-    <div id="posts-list"></div>
-  </div>
-
-  <!-- ЛЕНДИНГИ -->
-  <div id="section-landings" class="section">
-    <div id="landings-list"></div>
-  </div>
-
-  <!-- ПИСЬМА -->
-  <div id="section-emails" class="section">
-    <div id="emails-list"></div>
-  </div>
-
-  <!-- КОНКУРЕНТЫ -->
-  <div id="section-competitors" class="section">
-    <div id="competitors-list"></div>
-  </div>
-
-  <!-- SEO -->
-  <div id="section-seo" class="section">
-    <div id="seo-list"></div>
-  </div>
-
-  <!-- НЕДЕЛЬНЫЙ ОТЧЁТ -->
-  <div id="section-weekly" class="section">
-    <div id="weekly-list"></div>
-  </div>
-
-  <!-- МЕСЯЧНЫЙ ОТЧЁТ -->
-  <div id="section-monthly" class="section">
-    <div id="monthly-list"></div>
-  </div>
-
+  <div id="section-posts" class="section active"><div id="posts-list"></div></div>
+  <div id="section-landings" class="section"><div id="landings-list"></div></div>
+  <div id="section-competitors" class="section"><div id="competitors-list"></div></div>
+  <div id="section-seo" class="section"><div id="seo-list"></div></div>
+  <div id="section-weekly" class="section"><div id="weekly-list"></div></div>
+  <div id="section-monthly" class="section"><div id="monthly-list"></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let data = { posts: [], landings: [], emails: [], competitors: [], seo: [], weekly: [], monthly: [] };
+let data = { posts: [], landings: [], competitors: [], seo: [], weekly: [], monthly: [] };
+const TABS = ['posts','landings','competitors','seo','weekly','monthly'];
 
-async function loadData() {
+async function loadAll() {
   try {
-    const res = await fetch('/approvals');
-    data = await res.json();
-    // Ensure all arrays exist
-    ['posts','landings','emails','competitors','seo','weekly','monthly'].forEach(k => {
-      if (!data[k]) data[k] = [];
-    });
+    const [appRes, banRes] = await Promise.all([fetch('/approvals'), fetch('/banners-status')]);
+    data = await appRes.json();
+    TABS.forEach(k => { if (!data[k]) data[k] = []; });
+    const bn = await banRes.json();
+    document.getElementById('bn-total').textContent = bn.total;
+    document.getElementById('bn-used').textContent  = bn.used;
+    document.getElementById('bn-avail').textContent = bn.available;
     renderAll();
-  } catch(e) {
-    console.error('Ошибка загрузки:', e);
+  } catch (e) { console.error('load failed:', e); }
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  } catch (e) { return iso; }
+}
+
+function getStatusBadge(status) {
+  const map = {
+    pending:  ['status-pending',  'New'],
+    approved: ['status-approved', 'Approved'],
+    rejected: ['status-rejected', 'Rejected'],
+    edited:   ['status-edited',   'Edited'],
+    read:     ['status-read',     'Read'],
+  };
+  const [cls, label] = map[status] || ['status-pending', status];
+  return `<span class="status-badge ${cls}">${label}</span>`;
+}
+
+function postScheduleLine(post) {
+  if (post.publishedAt) {
+    const urn = post.linkedinPostUrn ? ` (${post.linkedinPostUrn})` : '';
+    return `<div class="schedule-line"><span class="pub">Published ${fmtDateTime(post.publishedAt)}</span>${post.imageUsed ? ` <span class="img">image: ${post.imageUsed}</span>` : ''}${urn}</div>`;
   }
+  if (post.dryRunPublishedAt) {
+    return `<div class="schedule-line"><span class="pub">Dry-run completed ${fmtDateTime(post.dryRunPublishedAt)}</span>${post.imagePreview ? ` <span class="img">image: ${post.imagePreview}</span>` : ''}</div>`;
+  }
+  if (post.publishError) {
+    return `<div class="schedule-line"><span class="err">Publish error: ${post.publishError}</span></div>`;
+  }
+  if (post.scheduledFor) {
+    return `<div class="schedule-line">Scheduled for <span class="when">${fmtDateTime(post.scheduledFor)}</span></div>`;
+  }
+  return '';
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+}
+
+function renderPosts() {
+  const el = document.getElementById('posts-list');
+  if (!data.posts.length) {
+    el.innerHTML = '<div class="empty"><h3>No posts</h3><p>The agent generates 2 posts per day. They will appear here for approval.</p></div>';
+    return;
+  }
+  el.innerHTML = data.posts.map((post, i) => `
+    <div class="card ${post.status !== 'pending' ? post.status : ''}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Post ${i + 1}</div>
+          <div class="card-meta">${escapeHtml(post.date || '')} &middot; LinkedIn</div>
+        </div>
+        ${getStatusBadge(post.status)}
+      </div>
+      <div class="card-body">
+        <div class="post-text" id="text-post-${i}">${escapeHtml(post.editedContent || post.content || '')}</div>
+        ${postScheduleLine(post)}
+      </div>
+      <div class="actions">
+        ${post.status === 'pending' ? `
+          <button class="btn btn-approve" onclick="approve('posts', ${i})">Approve</button>
+          <button class="btn btn-edit"    onclick="startEdit('post', ${i})">Edit</button>
+          <button class="btn btn-save" id="save-post-${i}" onclick="saveEdit('posts', ${i})">Save and approve</button>
+          <button class="btn btn-reject"  onclick="reject('posts', ${i})">Reject</button>
+        ` : `
+          <button class="btn btn-copy"   onclick="copyText('post', ${i})">Copy text</button>
+          ${post.status !== 'rejected' && !post.publishedAt ? `<button class="btn btn-edit" onclick="undoApproval('posts', ${i})">Change decision</button>` : ''}
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderLandings() {
+  const el = document.getElementById('landings-list');
+  if (!data.landings.length) {
+    el.innerHTML = '<div class="empty"><h3>No landings</h3></div>';
+    return;
+  }
+  el.innerHTML = data.landings.map((landing, i) => `
+    <div class="card ${landing.status !== 'pending' ? landing.status : ''}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escapeHtml(landing.title || 'Landing ' + (i + 1))}</div>
+          <div class="card-meta">${escapeHtml(landing.date || '')} &middot; GitHub Pages</div>
+        </div>
+        ${getStatusBadge(landing.status)}
+      </div>
+      <div class="card-body">
+        <div class="post-text">${escapeHtml(landing.description || '')}</div>
+        ${landing.previewUrl ? `<a class="landing-url" href="${landing.previewUrl}" target="_blank">${escapeHtml(landing.previewUrl)}</a>` : ''}
+      </div>
+      <div class="actions">
+        ${landing.status === 'pending' ? `
+          <button class="btn btn-approve" onclick="approve('landings', ${i})">Publish</button>
+          <button class="btn btn-reject"  onclick="reject('landings', ${i})">Reject</button>
+        ` : `
+          ${landing.previewUrl ? `<a href="${landing.previewUrl}" target="_blank" class="btn btn-copy" style="text-decoration:none;">Open</a>` : ''}
+          <button class="btn btn-edit" onclick="undoApproval('landings', ${i})">Change decision</button>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderReports(type, containerId, emptyTitle) {
+  const el = document.getElementById(containerId);
+  const items = data[type] || [];
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><h3>${emptyTitle}</h3></div>`;
+    return;
+  }
+  el.innerHTML = items.map((item, i) => `
+    <div class="card ${item.status === 'read' ? 'read' : ''}">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escapeHtml(item.title || (type + ' ' + (i + 1)))}</div>
+          <div class="card-meta">${escapeHtml(item.date || '')}</div>
+        </div>
+        ${getStatusBadge(item.status)}
+      </div>
+      <div class="card-body">
+        ${item.insights && item.insights.length ? `
+          <ul class="insight-list">${item.insights.map(ins => `<li>${escapeHtml(ins)}</li>`).join('')}</ul>
+          ${item.content ? `<div class="report-text" style="margin-top:16px;">${escapeHtml(item.content)}</div>` : ''}
+        ` : `
+          <div class="report-text">${escapeHtml(item.content || item.description || '')}</div>
+        `}
+      </div>
+      <div class="actions">
+        ${item.status === 'pending' ? `
+          <button class="btn btn-read" onclick="markRead('${type}', ${i})">Mark as read</button>
+        ` : `
+          <button class="btn btn-reject" style="font-size:12px;" onclick="undoApproval('${type}', ${i})">Mark as new</button>
+        `}
+        ${item.reportUrl ? `<a href="${item.reportUrl}" target="_blank" class="btn btn-copy" style="text-decoration:none;">Full report</a>` : ''}
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderAll() {
   renderPosts();
   renderLandings();
-  renderEmails();
-  renderReports('competitors', 'competitors-list', 'Конкурентов нет', 'Агент добавит анализ в понедельник');
-  renderReports('seo', 'seo-list', 'SEO идей нет', 'Агент добавит идеи в среду');
-  renderReports('weekly', 'weekly-list', 'Недельного отчёта нет', 'Агент добавит отчёт в пятницу');
-  renderReports('monthly', 'monthly-list', 'Месячного отчёта нет', 'Агент добавит отчёт 1-го числа');
+  renderReports('competitors', 'competitors-list', 'No competitor analysis yet');
+  renderReports('seo',         'seo-list',         'No SEO ideas yet');
+  renderReports('weekly',      'weekly-list',      'No weekly report yet');
+  renderReports('monthly',     'monthly-list',     'No monthly report yet');
   updateCounts();
 }
 
 function updateCounts() {
-  const pending = (arr) => arr.filter(i => i.status === 'pending').length;
-  const done = (arr) => arr.filter(i => i.status !== 'pending').length;
-
-  ['posts', 'landings', 'emails', 'competitors', 'seo', 'weekly', 'monthly'].forEach(type => {
+  const pending = arr => arr.filter(i => i.status === 'pending').length;
+  const done    = arr => arr.filter(i => i.status !== 'pending').length;
+  TABS.forEach(type => {
     const el = document.getElementById(`count-${type}`);
     if (!el) return;
-    const p = pending(data[type]);
-    const d = done(data[type]);
+    const p = pending(data[type] || []);
+    const d = done(data[type] || []);
     el.textContent = p > 0 ? p : (d > 0 ? d : '');
     el.className = 'count' + (p === 0 && d > 0 ? ' done' : '');
     el.style.display = (p === 0 && d === 0) ? 'none' : 'inline-block';
   });
 }
 
-function getStatusBadge(status) {
-  const map = {
-    pending:  ['status-pending',  '⏳ Новое'],
-    approved: ['status-approved', '✓ Одобрено'],
-    rejected: ['status-rejected', '✗ Отклонено'],
-    edited:   ['status-edited',   '✏️ Отредактировано'],
-    read:     ['status-read',     '✓ Прочитано'],
-  };
-  const [cls, label] = map[status] || ['status-pending', status];
-  return `<span class="status-badge ${cls}">${label}</span>`;
-}
-
-// ===== ПОСТЫ =====
-function renderPosts() {
-  const el = document.getElementById('posts-list');
-  if (!data.posts.length) {
-    el.innerHTML = '<div class="empty"><h3>Постов нет</h3><p>Агент добавит посты в понедельник</p></div>';
-    return;
-  }
-
-  el.innerHTML = data.posts.map((post, i) => `
-    <div class="card ${post.status !== 'pending' ? post.status : ''}" id="card-post-${i}">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Пост ${i + 1}</div>
-          <div class="card-meta">${post.date || ''} · LinkedIn</div>
-        </div>
-        ${getStatusBadge(post.status)}
-      </div>
-      <div class="card-body">
-        <div class="post-text" id="text-post-${i}">${post.editedContent || post.content}</div>
-      </div>
-      <div class="actions">
-        ${post.status === 'pending' ? `
-          <button class="btn btn-approve" onclick="approve('posts', ${i})">✓ Одобрить</button>
-          <button class="btn btn-edit" onclick="startEdit('post', ${i})">✏️ Редактировать</button>
-          <button class="btn btn-save" id="save-post-${i}" onclick="saveEdit('posts', ${i})">Сохранить и одобрить</button>
-          <button class="btn btn-reject" onclick="reject('posts', ${i})">Отклонить</button>
-        ` : `
-          <button class="btn btn-copy" onclick="copyText('post', ${i})">📋 Скопировать</button>
-          ${post.status !== 'rejected' ? `<button class="btn btn-edit" onclick="undoApproval('posts', ${i})">Изменить решение</button>` : ''}
-        `}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== ЛЕНДИНГИ =====
-function renderLandings() {
-  const el = document.getElementById('landings-list');
-  if (!data.landings.length) {
-    el.innerHTML = '<div class="empty"><h3>Лендингов нет</h3><p>Агент добавит лендинги в понедельник</p></div>';
-    return;
-  }
-
-  el.innerHTML = data.landings.map((landing, i) => `
-    <div class="card ${landing.status !== 'pending' ? landing.status : ''}" id="card-landing-${i}">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${landing.title || 'Лендинг ' + (i+1)}</div>
-          <div class="card-meta">${landing.date || ''} · GitHub Pages</div>
-        </div>
-        ${getStatusBadge(landing.status)}
-      </div>
-      <div class="card-body">
-        <div class="post-text" id="text-landing-${i}">${landing.description || ''}</div>
-        ${landing.previewUrl ? `<a class="landing-url" href="${landing.previewUrl}" target="_blank">🔗 ${landing.previewUrl}</a>` : ''}
-      </div>
-      <div class="actions">
-        ${landing.status === 'pending' ? `
-          <button class="btn btn-approve" onclick="approve('landings', ${i})">✓ Опубликовать</button>
-          <button class="btn btn-reject" onclick="reject('landings', ${i})">Отклонить</button>
-        ` : `
-          ${landing.previewUrl ? `<a href="${landing.previewUrl}" target="_blank" class="btn btn-copy" style="text-decoration:none;">🔗 Открыть</a>` : ''}
-          <button class="btn btn-edit" onclick="undoApproval('landings', ${i})">Изменить решение</button>
-        `}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== ПИСЬМА =====
-function renderEmails() {
-  const el = document.getElementById('emails-list');
-  if (!data.emails.length) {
-    el.innerHTML = '<div class="empty"><h3>Писем нет</h3><p>Агент добавит письма при необходимости</p></div>';
-    return;
-  }
-
-  el.innerHTML = data.emails.map((email, i) => `
-    <div class="card ${email.status !== 'pending' ? email.status : ''}" id="card-email-${i}">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${email.subject || 'Письмо ' + (i+1)}</div>
-          <div class="card-meta">${email.date || ''} · Email</div>
-        </div>
-        ${getStatusBadge(email.status)}
-      </div>
-      <div class="card-body">
-        <div class="post-text" id="text-email-${i}">${email.editedContent || email.content}</div>
-      </div>
-      <div class="actions">
-        ${email.status === 'pending' ? `
-          <button class="btn btn-approve" onclick="approve('emails', ${i})">✓ Отправить</button>
-          <button class="btn btn-edit" onclick="startEdit('email', ${i})">✏️ Редактировать</button>
-          <button class="btn btn-save" id="save-email-${i}" onclick="saveEdit('emails', ${i})">Сохранить и одобрить</button>
-          <button class="btn btn-reject" onclick="reject('emails', ${i})">Отклонить</button>
-        ` : `
-          <button class="btn btn-edit" onclick="undoApproval('emails', ${i})">Изменить решение</button>
-        `}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== ОТЧЁТЫ (конкуренты / SEO / недельный / месячный) =====
-function renderReports(type, containerId, emptyTitle, emptyText) {
-  const el = document.getElementById(containerId);
-  const items = data[type] || [];
-  if (!items.length) {
-    el.innerHTML = `<div class="empty"><h3>${emptyTitle}</h3><p>${emptyText}</p></div>`;
-    return;
-  }
-
-  el.innerHTML = items.map((item, i) => `
-    <div class="card ${item.status === 'read' ? 'read' : ''}" id="card-${type}-${i}">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${item.title || (type + ' ' + (i+1))}</div>
-          <div class="card-meta">${item.date || ''}</div>
-        </div>
-        ${getStatusBadge(item.status)}
-      </div>
-      <div class="card-body">
-        ${item.insights && item.insights.length ? `
-          <ul class="insight-list">
-            ${item.insights.map(ins => `<li>${ins}</li>`).join('')}
-          </ul>
-          ${item.content ? `<div class="report-text" style="margin-top:16px;">${item.content}</div>` : ''}
-        ` : `
-          <div class="report-text">${item.content || item.description || ''}</div>
-        `}
-      </div>
-      <div class="actions">
-        ${item.status === 'pending' ? `
-          <button class="btn btn-read" onclick="markRead('${type}', ${i})">✓ Прочитано</button>
-        ` : `
-          <button class="btn btn-reject" style="font-size:12px;" onclick="undoApproval('${type}', ${i})">Отметить как новое</button>
-        `}
-        ${item.reportUrl ? `<a href="${item.reportUrl}" target="_blank" class="btn btn-copy" style="text-decoration:none;">📄 Полный отчёт</a>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== ДЕЙСТВИЯ =====
-
 async function approve(type, index) {
   await updateItem(type, index, { status: 'approved', approvedAt: new Date().toISOString() });
-  showToast('✓ Одобрено! Агент опубликует автоматически.');
+  showToast(type === 'posts' ? 'Approved. Scheduled for next slot.' : 'Approved.');
 }
-
 async function reject(type, index) {
   await updateItem(type, index, { status: 'rejected' });
-  showToast('Отклонено.');
+  showToast('Rejected.');
 }
-
 async function markRead(type, index) {
   await updateItem(type, index, { status: 'read', approvedAt: new Date().toISOString() });
-  showToast('✓ Отмечено как прочитанное.');
+  showToast('Marked as read.');
 }
-
 function startEdit(type, index) {
   const el = document.getElementById(`text-${type}-${index}`);
+  if (!el) return;
   el.contentEditable = 'true';
   el.focus();
   const saveBtn = document.getElementById(`save-${type}-${index}`);
   if (saveBtn) saveBtn.style.display = 'inline-block';
 }
-
 async function saveEdit(type, index) {
   const el = document.getElementById(`text-${type.slice(0,-1)}-${index}`);
   const edited = el ? el.innerText : '';
   if (el) el.contentEditable = 'false';
   await updateItem(type, index, {
-    status: 'edited',
-    editedContent: edited,
-    approvedAt: new Date().toISOString()
+    status: 'edited', editedContent: edited, approvedAt: new Date().toISOString()
   });
-  showToast('✏️ Отредактировано и одобрено!');
+  showToast('Edited and approved.');
 }
-
 async function undoApproval(type, index) {
   await updateItem(type, index, { status: 'pending', approvedAt: null });
-  showToast('Решение отменено.');
+  showToast('Decision undone.');
 }
-
 function copyText(type, index) {
   const el = document.getElementById(`text-${type}-${index}`);
   if (el) {
     navigator.clipboard.writeText(el.innerText);
-    showToast('📋 Скопировано! Вставь в LinkedIn.');
+    showToast('Copied to clipboard.');
   }
 }
-
 async function updateItem(type, index, changes) {
   await fetch('/approve', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type, index, ...changes })
   });
-  await loadData();
+  await loadAll();
 }
-
 function switchTab(tab) {
-  const tabs = ['posts', 'landings', 'emails', 'competitors', 'seo', 'weekly', 'monthly'];
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', tabs[i] === tab);
-  });
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', TABS[i] === tab));
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(`section-${tab}`).classList.add('active');
 }
-
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -538,8 +512,63 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-loadData();
-setInterval(loadData, 15000);
+async function loadGenerationStatus() {
+  try {
+    const res = await fetch('/generation-status');
+    const s = await res.json();
+    const el = document.getElementById('gen-status');
+    const btn = document.getElementById('btn-generate');
+    if (!s.apiKeySet) {
+      el.textContent = 'ANTHROPIC_API_KEY not set';
+      el.style.color = '#D92D20';
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+      return;
+    }
+    if (s.running) {
+      el.textContent = 'Generating…';
+      el.style.color = '#FF981B';
+      btn.disabled = true;
+      btn.style.opacity = '0.4';
+    } else {
+      const when = s.lastGeneratedAt
+        ? 'Last: ' + new Date(s.lastGeneratedAt).toLocaleDateString()
+        : 'Never generated';
+      el.textContent = when;
+      el.style.color = '#888';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  } catch (e) {}
+}
+
+async function triggerGeneration() {
+  const btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.style.opacity = '0.4';
+  document.getElementById('gen-status').textContent = 'Starting…';
+  try {
+    const res = await fetch('/generate-posts', { method: 'POST' });
+    const d = await res.json();
+    if (d.error) {
+      showToast('Error: ' + d.error);
+      loadGenerationStatus();
+    } else {
+      showToast(d.message);
+      document.getElementById('gen-status').textContent = 'Generating…';
+      document.getElementById('gen-status').style.color = '#FF981B';
+      setTimeout(() => { loadAll(); loadGenerationStatus(); }, 5000);
+    }
+  } catch (e) {
+    showToast('Request failed');
+    loadGenerationStatus();
+  }
+}
+
+loadAll();
+loadGenerationStatus();
+setInterval(loadAll, 15000);
+setInterval(loadGenerationStatus, 10000);
 </script>
 </body>
 </html>

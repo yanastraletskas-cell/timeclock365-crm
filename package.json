@@ -1,17 +1,14 @@
 {
-  "name": "email-server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "timeclock365-linkedin-agent",
+  "version": "2.0.0",
+  "description": "TimeClock 365 LinkedIn approval and scheduling server",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "nodemailer": "^8.0.5"
+    "@anthropic-ai/sdk": "^0.91.1"
   }
 }
