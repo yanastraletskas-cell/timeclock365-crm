@@ -4,14 +4,9 @@
   "description": "TimeClock 365 LinkedIn approval and scheduling server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "generate": "node generate-posts.js",
-    "generate:5": "cross-env POST_COUNT=5 node generate-posts.js",
-    "generate:10": "cross-env POST_COUNT=10 node generate-posts.js"
+    "start": "node server.js"
   },
   "license": "ISC",
   "type": "commonjs",
-  "dependencies": {
-    "cross-env": "^7.0.3"
-  }
+  "dependencies": {}
 }
